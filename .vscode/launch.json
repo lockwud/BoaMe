@@ -1,0 +1,12 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "BoaMe Mobile - Expo",
+      "type": "node-terminal",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/apps/mobile",
+      "command": "pnpm android"
+    }
+  ]
+}

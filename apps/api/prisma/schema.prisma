@@ -1,0 +1,415 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  DONOR
+  BENEFICIARY
+  ADMIN
+  VERIFIER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum CampaignStatus {
+  DRAFT
+  PENDING_APPROVAL
+  ACTIVE
+  FUNDED
+  COMPLETED
+  CANCELLED
+  EXPIRED
+}
+
+enum CampaignCategory {
+  MEDICAL
+  EDUCATION
+  EMERGENCY
+  COMMUNITY
+  BUSINESS
+  OTHER
+}
+
+enum DonationStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+enum DonationType {
+  ONE_TIME
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+enum PaymentMethod {
+  CARD
+  MOBILE_MONEY
+  BANK_TRANSFER
+  OFFLINE
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REQUIRES_MORE_INFO
+}
+
+enum TransactionStatus {
+  PENDING
+  PROCESSING
+  SUCCESS
+  FAILED
+  REVERSED
+}
+
+enum NotificationType {
+  DONATION_RECEIVED
+  CAMPAIGN_APPROVED
+  CAMPAIGN_FUNDED
+  VERIFICATION_STATUS
+  PAYMENT_CONFIRMATION
+  REMINDER
+  UPDATE
+}
+
+enum Platform {
+  WEB
+  MOBILE_ANDROID
+  MOBILE_IOS
+}
+
+model User {
+  id                    String             @id @default(cuid())
+  email                 String             @unique
+  phone                 String             @unique
+  password              String
+  firstName             String
+  lastName              String
+  middleName            String?
+  dateOfBirth           DateTime?
+  gender                Gender?
+  profileImage          String?
+  isEmailVerified       Boolean            @default(false)
+  isPhoneVerified       Boolean            @default(false)
+  isIdentityVerified    Boolean            @default(false)
+  verificationStatus    VerificationStatus @default(PENDING)
+  verificationDocuments String[]           @default([])
+  verificationNotes     String?
+  role                  UserRole           @default(DONOR)
+  status                UserStatus         @default(ACTIVE)
+  bio                   String?
+  location              String?
+  ghanaCardNumber       String?
+  walletBalance         Float              @default(0)
+  totalDonated          Float              @default(0)
+  totalRaised           Float              @default(0)
+  totalCampaigns        Int                @default(0)
+  fcmToken              String?
+  deviceId              String?
+  platform              Platform?
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  lastLoginAt           DateTime?
+  deletedAt             DateTime?
+  campaigns             Campaign[]         @relation("Beneficiary")
+  donations             Donation[]
+  donorCampaigns        CampaignDonor[]
+  notifications         Notification[]
+  verifications         Verification[]
+  payoutRequests        PayoutRequest[]
+  sessions              Session[]
+  mobileSessions        MobileSession[]
+
+  @@map("users")
+}
+
+model Campaign {
+  id                String             @id @default(cuid())
+  title             String
+  slug              String             @unique
+  description       String
+  story             String?
+  category          CampaignCategory
+  status            CampaignStatus     @default(DRAFT)
+  goalAmount        Float              @default(0)
+  raisedAmount      Float              @default(0)
+  minimumDonation   Float              @default(1)
+  location          String?
+  imageUrl          String?
+  videoUrl          String?
+  coverImage        String?
+  startDate         DateTime?          @default(now())
+  endDate           DateTime?
+  fundedAt          DateTime?
+  isVerified        Boolean            @default(false)
+  verificationNotes String?
+  documents         String[]           @default([])
+  isFeatured        Boolean            @default(false)
+  views             Int                @default(0)
+  shares            Int                @default(0)
+  beneficiaryId     String
+  beneficiary       User               @relation("Beneficiary", fields: [beneficiaryId], references: [id])
+  donors            CampaignDonor[]
+  updates           CampaignUpdate[]
+  donations         Donation[]
+  payoutRequests    PayoutRequest[]
+  media             CampaignMedia[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  deletedAt         DateTime?
+
+  @@index([beneficiaryId])
+  @@index([status])
+  @@index([category])
+  @@map("campaigns")
+}
+
+model CampaignDonor {
+  id             String    @id @default(cuid())
+  campaignId     String
+  campaign       Campaign  @relation(fields: [campaignId], references: [id])
+  userId         String
+  user           User      @relation(fields: [userId], references: [id])
+  totalDonated   Float     @default(0)
+  donationCount  Int       @default(0)
+  isAnonymous    Boolean   @default(false)
+  isRecurring    Boolean   @default(false)
+  lastDonationAt DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@unique([campaignId, userId])
+  @@index([campaignId])
+  @@index([userId])
+  @@map("campaign_donors")
+}
+
+model Donation {
+  id                  String         @id @default(cuid())
+  amount              Float
+  fee                 Float          @default(0)
+  netAmount           Float
+  currency            String         @default("GHS")
+  type                DonationType   @default(ONE_TIME)
+  status              DonationStatus @default(PENDING)
+  paymentMethod       PaymentMethod
+  paymentReference    String         @unique
+  paymentProvider     String
+  paymentData         Json?
+  recurringFrequency  String?
+  nextPaymentDate     DateTime?
+  recurringEndDate    DateTime?
+  isAnonymous         Boolean        @default(false)
+  message             String?
+  donorId             String
+  donor               User           @relation(fields: [donorId], references: [id])
+  campaignId          String
+  campaign            Campaign       @relation(fields: [campaignId], references: [id])
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  completedAt         DateTime?
+
+  @@index([donorId])
+  @@index([campaignId])
+  @@index([status])
+  @@index([paymentReference])
+  @@map("donations")
+}
+
+model CampaignUpdate {
+  id         String   @id @default(cuid())
+  campaignId String
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  title      String
+  content    String
+  imageUrl   String?
+  isPublic   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([campaignId])
+  @@map("campaign_updates")
+}
+
+model CampaignMedia {
+  id            String   @id @default(cuid())
+  campaignId    String
+  campaign      Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  type          String
+  title         String
+  description   String?
+  thumbnailUrl  String
+  streamUrl     String?
+  status        String
+  startsAt      DateTime?
+  durationLabel String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([campaignId])
+  @@map("campaign_media")
+}
+
+model PayoutRequest {
+  id                   String            @id @default(cuid())
+  userId               String
+  user                 User              @relation(fields: [userId], references: [id])
+  campaignId           String
+  campaign             Campaign          @relation(fields: [campaignId], references: [id])
+  amount               Float
+  fee                  Float             @default(0)
+  netAmount            Float
+  status               TransactionStatus @default(PENDING)
+  bankName             String?
+  accountNumber        String?
+  accountName          String?
+  mobileMoneyNumber    String?
+  mobileMoneyProvider  String?
+  transactionReference String?
+  notes                String?
+  approvedBy           String?
+  approvedAt           DateTime?
+  completedAt          DateTime?
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+
+  @@index([userId])
+  @@index([campaignId])
+  @@index([status])
+  @@map("payout_requests")
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id])
+  type      NotificationType
+  title     String
+  message   String
+  link      String?
+  isRead    Boolean          @default(false)
+  metadata  Json?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@index([userId])
+  @@index([isRead])
+  @@map("notifications")
+}
+
+model Verification {
+  id             String             @id @default(cuid())
+  userId         String
+  user           User               @relation(fields: [userId], references: [id])
+  verifiedBy     String?
+  identityType   String
+  identityNumber String
+  fullName       String
+  dateOfBirth    DateTime
+  documents      String[]
+  status         VerificationStatus @default(PENDING)
+  notes          String?
+  submittedAt    DateTime           @default(now())
+  verifiedAt     DateTime?
+  expiresAt      DateTime?
+
+  @@index([userId])
+  @@map("verifications")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  token     String   @unique
+  userAgent String?
+  ipAddress String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([token])
+  @@map("sessions")
+}
+
+model MobileSession {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  token      String   @unique
+  deviceId   String
+  deviceName String?
+  fcmToken   String?
+  platform   Platform
+  appVersion String?
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([token])
+  @@index([deviceId])
+  @@map("mobile_sessions")
+}
+
+model AuditLog {
+  id        String    @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  changes   Json?
+  ipAddress String?
+  userAgent String?
+  platform  Platform?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model SystemSetting {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       Json
+  description String?
+  isPublic    Boolean  @default(false)
+  updatedAt   DateTime @updatedAt
+  updatedBy   String?
+
+  @@map("system_settings")
+}
+
+model FeatureFlag {
+  id          String     @id @default(cuid())
+  key         String     @unique
+  enabled     Boolean    @default(false)
+  description String?
+  platform    Platform[]
+  updatedAt   DateTime   @updatedAt
+  updatedBy   String?
+
+  @@map("feature_flags")
+}

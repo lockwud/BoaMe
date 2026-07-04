@@ -1,0 +1,34 @@
+{
+  "expo": {
+    "name": "BoaMe",
+    "slug": "boame",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "scheme": "boame",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "cover",
+      "backgroundColor": "#F5F7F2"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.boame.mobile"
+    },
+    "android": {
+      "package": "com.boame.mobile",
+      "adaptiveIcon": {
+        "backgroundColor": "#2E7D32"
+      }
+    },
+    "extra": {
+      "apiUrl": "http://172.20.10.3:5000/api/v1",
+      "eas": {
+        "projectId": "replace-with-eas-project-id"
+      }
+    }
+  }
+}

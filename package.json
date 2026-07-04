@@ -1,0 +1,21 @@
+{
+  "name": "boame",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.28.0",
+  "scripts": {
+    "dev": "pnpm run dev:clean && turbo dev --filter=@boame/web",
+    "dev:clean": "node scripts/clean-dev-ports.mjs",
+    "dev:all": "turbo dev",
+    "dev:mobile": "pnpm --filter @boame/mobile run dev:lan",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3",
+    "turbo": "^2.3.3",
+    "typescript": "^5.7.2"
+  }
+}
