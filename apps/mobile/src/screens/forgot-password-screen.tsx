@@ -2,31 +2,58 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useState } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import type { RootStackParamList } from "../navigation/types";
-import { login } from "../services/auth-service";
+import { apiPost } from "../services/api-client";
 import { colors } from "../theme/colors";
 
-type Props = NativeStackScreenProps<RootStackParamList, "Login">;
+type Props = NativeStackScreenProps<RootStackParamList, "ForgotPassword">;
 
-export function LoginScreen({ navigation }: Props) {
+export function ForgotPasswordScreen({ navigation }: Props) {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [sent, setSent] = useState(false);
 
   async function submit() {
+    if (!email.trim()) {
+      Alert.alert("Email required", "Please enter your email address.");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      const response = await login(email, password);
-      const userRole = response.user?.role;
-      if (userRole === "BENEFICIARY") {
-        navigation.reset({ index: 0, routes: [{ name: "MainTabs" }] });
-      } else {
-        navigation.reset({ index: 0, routes: [{ name: "MainTabs" }] });
-      }
+      await apiPost<{ message: string }>("/auth/forgot-password", { email });
+      setSent(true);
     } catch (error) {
-      Alert.alert("Login failed", error instanceof Error ? error.message : "Could not log in.");
+      Alert.alert("Request failed", error instanceof Error ? error.message : "Could not send reset link.");
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  if (sent) {
+    return (
+      <ScrollView style={styles.screen} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <View style={styles.brandRow}>
+          <View style={styles.logoMark}>
+            <Text style={styles.logoText}>♡</Text>
+          </View>
+          <View>
+            <Text style={styles.brandName}>BoaMe</Text>
+            <Text style={styles.brandCopy}>Ghana giving app</Text>
+          </View>
+        </View>
+
+        <View style={styles.form}>
+          <Text style={styles.title}>Check your email</Text>
+          <Text style={styles.copy}>
+            If an account exists for {email}, you will receive password reset instructions shortly.
+          </Text>
+        </View>
+
+        <Pressable style={styles.button} onPress={() => navigation.goBack()}>
+          <Text style={styles.buttonText}>Back to sign in</Text>
+        </Pressable>
+      </ScrollView>
+    );
   }
 
   return (
@@ -42,34 +69,30 @@ export function LoginScreen({ navigation }: Props) {
       </View>
 
       <View style={styles.form}>
-        <Text style={styles.title}>Welcome back</Text>
-        <Text style={styles.copy}>Access campaigns, donations, receipts, and beneficiary support by logging in.</Text>
+        <Text style={styles.title}>Reset password</Text>
+        <Text style={styles.copy}>
+          Enter the email address linked to your BoaMe account and we will send you instructions to reset your password.
+        </Text>
 
         <Text style={styles.label}>Email</Text>
-        <TextInput style={styles.input} placeholder="Enter your email" placeholderTextColor="#94A3B8" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
-        <Text style={styles.label}>Password</Text>
-        <TextInput style={styles.input} placeholder="Enter your password" placeholderTextColor="#94A3B8" value={password} onChangeText={setPassword} secureTextEntry />
-
-        <View style={styles.helperRow}>
-          <View style={styles.rememberRow}>
-            <View style={styles.checkbox}>
-              <Text style={styles.checkmark}>✓</Text>
-            </View>
-            <Text style={styles.rememberText}>Remember me</Text>
-          </View>
-          <Pressable onPress={() => navigation.navigate("ForgotPassword")}>
-            <Text style={styles.forgotText}>Forgot password?</Text>
-          </Pressable>
-        </View>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter your email"
+          placeholderTextColor="#94A3B8"
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
+        />
 
         <Pressable style={[styles.button, isSubmitting && styles.buttonDisabled]} onPress={submit} disabled={isSubmitting}>
-          <Text style={styles.buttonText}>{isSubmitting ? "Checking account..." : "Sign in"}</Text>
+          <Text style={styles.buttonText}>{isSubmitting ? "Sending..." : "Send reset link"}</Text>
         </Pressable>
       </View>
 
-      <Pressable style={styles.signupRow} onPress={() => navigation.navigate("Register")}>
-        <Text style={styles.signupMuted}>Don't have an account? </Text>
-        <Text style={styles.signupText}>Sign up</Text>
+      <Pressable style={styles.signupRow} onPress={() => navigation.goBack()}>
+        <Text style={styles.signupMuted}>Remember your password? </Text>
+        <Text style={styles.signupText}>Sign in</Text>
       </Pressable>
     </ScrollView>
   );
@@ -146,40 +169,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     marginBottom: 16,
     color: "#0F172A",
-    fontWeight: "700"
-  },
-  helperRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 24
-  },
-  rememberRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8
-  },
-  checkbox: {
-    width: 18,
-    height: 18,
-    borderRadius: 4,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#22C55E"
-  },
-  checkmark: {
-    color: "#FFFFFF",
-    fontSize: 12,
-    fontWeight: "900"
-  },
-  rememberText: {
-    color: "#334155",
-    fontSize: 13,
-    fontWeight: "700"
-  },
-  forgotText: {
-    color: "#EF4444",
-    fontSize: 13,
     fontWeight: "700"
   },
   button: {

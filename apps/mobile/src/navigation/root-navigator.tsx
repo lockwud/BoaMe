@@ -9,6 +9,7 @@ import { DonateScreen } from "../screens/donate-screen";
 import { DonationSuccessScreen } from "../screens/donation-success-screen";
 import { DonationsScreen } from "../screens/donations-screen";
 import { HomeScreen } from "../screens/home-screen";
+import { ForgotPasswordScreen } from "../screens/forgot-password-screen";
 import { LoginScreen } from "../screens/login-screen";
 import { NotificationsScreen } from "../screens/notifications-screen";
 import { ProfileScreen } from "../screens/profile-screen";
@@ -90,6 +91,7 @@ export function RootNavigator() {
     <Stack.Navigator initialRouteName="Login">
       <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ headerShown: false }} />
       <Stack.Screen name="MainTabs" component={MainTabs} options={{ headerShown: false }} />
       <Stack.Screen name="CampaignDetail" component={CampaignDetailScreen} options={{ title: "Campaign" }} />
       <Stack.Screen name="CreateCampaign" component={CreateCampaignScreen} options={{ title: "Request support" }} />
