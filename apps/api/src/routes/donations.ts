@@ -145,7 +145,7 @@ donationRouter.post("/initialize", async (req, res, next) => {
         message: payload.message,
         paymentReference: reference,
         paymentProvider: "PAYSTACK_DEMO",
-        status: "SUCCESS", // Demo: auto-success
+        status: "COMPLETED",
         paymentData: payload.paymentDetails || {}
       }
     });

@@ -379,7 +379,7 @@ campaignRouter.get("/:id/stats", async (req, res) => {
         select: { views: true, shares: true }
       }),
       prisma.donation.count({
-        where: { campaignId: req.params.id, status: "SUCCESS" }
+        where: { campaignId: req.params.id, status: "COMPLETED" }
       })
     ]);
 
