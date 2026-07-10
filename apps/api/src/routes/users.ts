@@ -73,22 +73,46 @@ const notifications = [
   }
 ];
 
-userRouter.get("/profile", (req, res) => {
-  // Get email from JWT token (in real app, this would be decoded from Authorization header)
-  // For demo, we'll return the first registered user or default
-  const allUsers = Array.from(registeredUsers.values());
-  if (allUsers.length > 0) {
-    const user = allUsers[0];
-    res.json({
-      id: `user-${allUsers.length}`,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      phone: user.phone,
-      role: user.role
-    });
-  } else {
-    res.json({ id: "dev-user", firstName: "Ama", lastName: "Mensah", phone: "+233241234567", role: "DONOR" });
+function decodeBearerToken(token: string) {
+  const parts = token.split(".");
+  if (parts.length !== 3) return null;
+
+  try {
+    const payload = Buffer.from(parts[1], "base64").toString("utf8");
+    return JSON.parse(payload) as { email?: string };
+  } catch {
+    return null;
   }
+}
+
+userRouter.get("/profile", (req, res) => {
+  const authHeader = req.header("authorization");
+  let userEmail: string | undefined;
+
+  if (authHeader?.toLowerCase().startsWith("bearer ")) {
+    const token = authHeader.slice(7).trim();
+    const decoded = decodeBearerToken(token);
+    if (decoded?.email) {
+      userEmail = decoded.email.toLowerCase();
+    }
+  }
+
+  if (!userEmail) {
+    return res.status(401).json({ message: "Unauthorized: missing or invalid token" });
+  }
+
+  const user = registeredUsers.get(userEmail);
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  res.json({
+    id: `user-${userEmail}`,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    phone: user.phone,
+    role: user.role
+  });
 });
 userRouter.put("/profile", (_req, res) => res.json({ message: "Profile updated" }));
 userRouter.post("/change-password", (_req, res) => res.json({ message: "Password changed" }));

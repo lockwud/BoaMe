@@ -6,6 +6,7 @@ import { SkeletonLoader } from "../components/skeleton-loader";
 import type { RootStackParamList } from "../navigation/types";
 import { getCampaign } from "../services/campaign-service";
 import { initializeDonation } from "../services/donation-service";
+import { getCurrentUser } from "../services/auth-service";
 import { paymentMethodLabels } from "../services/settings-service";
 import { colors } from "../theme/colors";
 import { formatGhs } from "../utils/format";
@@ -56,8 +57,8 @@ export function DonateScreen({ route, navigation }: Props) {
   const [mode, setMode] = useState<DonationMode>("INDIVIDUAL");
   const [phoneNumber, setPhoneNumber] = useState("+233");
   const [mobileMoneyProvider, setMobileMoneyProvider] = useState<"MTN" | "VODAFONE" | "AIRTELTIGO">("MTN");
-  const [payerName, setPayerName] = useState("Ama Mensah");
-  const [payerEmail, setPayerEmail] = useState("ama@boame.dev");
+  const [payerName, setPayerName] = useState("");
+  const [payerEmail, setPayerEmail] = useState("");
   const [cardNumber, setCardNumber] = useState("");
   const [cardExpiry, setCardExpiry] = useState("");
   const [cardCvv, setCardCvv] = useState("");
@@ -106,6 +107,15 @@ export function DonateScreen({ route, navigation }: Props) {
       isMounted = false;
     };
   }, [route.params.slug]);
+
+  useEffect(() => {
+    const user = getCurrentUser();
+    if (user) {
+      const fullName = `${user.firstName} ${user.lastName}`.trim();
+      setPayerName(fullName || user.email);
+      setPayerEmail(user.email);
+    }
+  }, []);
 
   if (!campaign) {
     return (

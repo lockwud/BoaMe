@@ -4,12 +4,12 @@
   "private": true,
   "main": "index.js",
   "scripts": {
-    "dev": "expo start",
+    "dev": "EXPO_NO_DEPENDENCY_VALIDATION=1 expo start --offline",
     "dev:lan": "EXPO_NO_DEPENDENCY_VALIDATION=1 expo start --host lan --port 8081",
     "dev:lan:clear": "EXPO_NO_DEPENDENCY_VALIDATION=1 expo start --host lan --clear --port 8081",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "start": "expo start",
+    "android": "EXPO_NO_DEPENDENCY_VALIDATION=1 expo start --android --offline",
+    "ios": "EXPO_NO_DEPENDENCY_VALIDATION=1 expo start --ios --offline",
+    "start": "EXPO_NO_DEPENDENCY_VALIDATION=1 expo start --offline",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --ext .ts,.tsx"
   },

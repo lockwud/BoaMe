@@ -1,6 +1,37 @@
 import Constants from "expo-constants";
+import { Platform } from "react-native";
 
-const apiUrl = Constants.expoConfig?.extra?.apiUrl ?? "http://localhost:5000/api/v1";
+function normalizeApiUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    const isLoopbackHost = ["localhost", "127.0.0.1", "0.0.0.0"].includes(parsed.hostname);
+
+    if (Platform.OS === "android" && isLoopbackHost) {
+      parsed.hostname = "10.0.2.2";
+    }
+
+    return parsed.toString().replace(/\/$/, "");
+  } catch {
+    return url.replace(/\/$/, "");
+  }
+}
+
+function getDevServerHost(): string | undefined {
+  const hostUri = Constants.expoConfig?.hostUri;
+  return hostUri?.split(":")[0];
+}
+
+function resolveApiUrl() {
+  const configuredUrl = process.env.EXPO_PUBLIC_API_URL ?? Constants.expoConfig?.extra?.apiUrl;
+  const devServerHost = getDevServerHost();
+  const defaultHost = Platform.OS === "android" ? "10.0.2.2" : "localhost";
+  const defaultUrl = `http://${devServerHost ?? defaultHost}:5000/api/v1`;
+  const selectedUrl = configuredUrl || defaultUrl;
+
+  return normalizeApiUrl(selectedUrl);
+}
+
+const apiUrl = resolveApiUrl();
 let accessToken: string | null = null;
 
 export function setAccessToken(token: string | null) {

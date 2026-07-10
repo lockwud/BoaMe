@@ -33,40 +33,50 @@ function decodeJWT(token: string): { email?: string; role?: string; userId?: str
 export async function login(email: string, password: string): Promise<AuthResponse> {
   const response = await apiPost<AuthResponse>("/auth/mobile/login", { email, password });
   setAccessToken(response.accessToken);
-  
-  // Extract basic info from JWT token
+
   const jwtData = decodeJWT(response.accessToken);
-  if (!jwtData?.email) {
+  if (!response.user && !jwtData?.email) {
     console.warn("Login response missing user data:", response);
     throw new Error("Login failed: No user data received");
   }
-  
-  // Initialize with JWT data
-  currentUser = {
-    id: jwtData.userId || "unknown",
-    email: jwtData.email,
-    phone: "",
-    firstName: jwtData.email.split('@')[0] || "User",
-    lastName: "",
-    role: (jwtData.role as UserRole) || "DONOR",
-    status: "ACTIVE"
-  };
-  
-  // Fetch full user profile to get actual name and phone
-  try {
-    const profile = await apiGet<{ firstName: string; lastName: string; phone: string }>("/users/profile");
-    if (profile) {
-      currentUser = {
-        ...currentUser,
-        firstName: profile.firstName || currentUser.firstName,
-        lastName: profile.lastName || currentUser.lastName,
-        phone: profile.phone || currentUser.phone
+
+  currentUser = response.user
+    ? {
+        id: response.user.id,
+        email: response.user.email,
+        phone: response.user.phone ?? "",
+        firstName: response.user.firstName || response.user.email.split("@")[0] || "User",
+        lastName: response.user.lastName || "",
+        role: response.user.role,
+        status: response.user.status ?? "ACTIVE"
+      }
+    : {
+        id: jwtData?.userId || "unknown",
+        email: jwtData?.email ?? "unknown",
+        phone: jwtData?.phone ?? "",
+        firstName: jwtData?.firstName || jwtData?.email?.split("@")[0] || "User",
+        lastName: jwtData?.lastName || "",
+        role: (jwtData?.role as UserRole) || "DONOR",
+        status: "ACTIVE"
       };
+
+  // Fetch full user profile if the token or response did not include enough data
+  if (!currentUser.firstName || !currentUser.lastName || !currentUser.phone) {
+    try {
+      const profile = await apiGet<{ firstName: string; lastName: string; phone: string }>("/users/profile");
+      if (profile) {
+        currentUser = {
+          ...currentUser,
+          firstName: profile.firstName || currentUser.firstName,
+          lastName: profile.lastName || currentUser.lastName,
+          phone: profile.phone || currentUser.phone
+        };
+      }
+    } catch (error) {
+      console.warn("Could not fetch user profile, using available login data:", error);
     }
-  } catch (error) {
-    console.warn("Could not fetch user profile, using JWT data:", error);
   }
-  
+
   return response;
 }
 
