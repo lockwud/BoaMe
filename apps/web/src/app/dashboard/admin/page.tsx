@@ -62,7 +62,7 @@ type TabId = "overview" | "verification" | "campaigns" | "payments" | "payouts" 
 
 const navGroups: Array<{
   title: string;
-  links: Array<{ id: TabId; icon: React.ComponentType<{ size?: number; className?: string }>; label: string }>;
+  links: Array<{ id: TabId; icon: React.ComponentType<{ size?: string | number; className?: string }>; label: string }>;
 }> = [
   {
     title: "Operations",
@@ -90,7 +90,7 @@ const statMeta = {
   "Verified live": { icon: BadgeCheck, tone: "bg-green-50 text-green-700" },
   "Payout queue": { icon: HandCoins, tone: "bg-gray-100 text-gray-700" },
   "Risk flags": { icon: AlertTriangle, tone: "bg-red-50 text-red-600" }
-} satisfies Record<string, { icon: React.ComponentType<{ size?: number; className?: string }>; tone: string }>;
+} satisfies Record<string, { icon: React.ComponentType<{ size?: string | number; className?: string }>; tone: string }>;
 
 type OverviewStat = {
   label: string;
