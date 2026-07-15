@@ -1,4 +1,4 @@
-import { BadgeCheck, Banknote, Filter, Smartphone } from "lucide-react";
+import { BadgeCheck, Banknote, Filter } from "lucide-react";
 import { CampaignCard } from "@/components/campaign-card";
 import { getCampaigns } from "@/lib/api";
 
@@ -9,7 +9,12 @@ type CampaignsPageProps = {
 export default async function CampaignsPage({ searchParams }: CampaignsPageProps) {
   const params = await searchParams;
   const query = params?.q?.trim().toLowerCase() ?? "";
-  const campaigns = await getCampaigns();
+  let campaigns: Awaited<ReturnType<typeof getCampaigns>> = [];
+  try {
+    campaigns = await getCampaigns();
+  } catch {
+    // API unavailable — no campaigns to show, no dummy data
+  }
   const visibleCampaigns = query
     ? campaigns.filter((campaign) =>
         [campaign.title, campaign.description, campaign.location, campaign.category]
@@ -33,7 +38,7 @@ export default async function CampaignsPage({ searchParams }: CampaignsPageProps
           <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-gray-600">Explore verified campaigns across Ghana and give from ₵1.</p>
           <div className="mt-7 flex flex-wrap justify-center gap-4 text-sm font-bold text-gray-700">
             <span className="inline-flex items-center gap-2"><BadgeCheck size={17} className="text-boame-deep" /> Verified campaigns</span>
-            <span className="inline-flex items-center gap-2"><Smartphone size={17} className="text-boame-deep" /> MoMo ready</span>
+            <span className="inline-flex items-center gap-2"><BadgeCheck size={17} className="text-boame-deep" /> MoMo ready</span>
             <span className="inline-flex items-center gap-2"><Banknote size={17} className="text-boame-deep" /> Give from ₵1</span>
           </div>
         </div>

@@ -66,55 +66,30 @@ async function apiFetch<T>(path: string): Promise<T> {
 }
 
 export async function getCampaigns(): Promise<CampaignSummary[]> {
-  try {
-    const response = await apiFetch<ApiListResponse<ApiCampaign[]> | ApiCampaign[]>("/campaigns");
-    return unwrapData(response).map(normalizeCampaign);
-  } catch {
-    return [];
-  }
+  const response = await apiFetch<ApiListResponse<ApiCampaign[]> | ApiCampaign[]>("/campaigns");
+  return unwrapData(response).map(normalizeCampaign);
 }
 
 export async function getFeaturedCampaigns(): Promise<CampaignSummary[]> {
-  try {
-    const response = await apiFetch<ApiListResponse<ApiCampaign[]> | ApiCampaign[]>("/campaigns/featured");
-    return unwrapData(response).map(normalizeCampaign);
-  } catch {
-    return [];
-  }
+  const response = await apiFetch<ApiListResponse<ApiCampaign[]> | ApiCampaign[]>("/campaigns/featured");
+  return unwrapData(response).map(normalizeCampaign);
 }
 
-export async function getCampaign(slugOrId: string): Promise<CampaignSummary | undefined> {
-  try {
-    const response = await apiFetch<ApiListResponse<ApiCampaign> | ApiCampaign>(`/campaigns/${slugOrId}`);
-    return normalizeCampaign(unwrapData(response));
-  } catch {
-    return undefined;
-  }
+export async function getCampaign(slugOrId: string): Promise<CampaignSummary> {
+  const response = await apiFetch<ApiListResponse<ApiCampaign> | ApiCampaign>(`/campaigns/${slugOrId}`);
+  return normalizeCampaign(unwrapData(response));
 }
 
 export async function getImpactStats(): Promise<ImpactStats> {
-  try {
-    const response = await apiFetch<ApiListResponse<{ donations: { _sum: { amount: number | null }; _count: number }; users: number }>>("/admin/analytics");
-    return {
-      totalRaised: response.data.donations._sum.amount ?? 0,
-      beneficiariesHelped: 0,
-      totalDonors: response.data.users,
-      mobileDownloads: 0
-    };
-  } catch {
-    return {
-      totalRaised: 0,
-      beneficiariesHelped: 0,
-      totalDonors: 0,
-      mobileDownloads: 0
-    };
-  }
+  const response = await apiFetch<ApiListResponse<{ donations: { _sum: { amount: number | null }; _count: number }; users: number }>>("/admin/analytics");
+  return {
+    totalRaised: response.data.donations._sum.amount ?? 0,
+    beneficiariesHelped: 0,
+    totalDonors: response.data.users,
+    mobileDownloads: 0
+  };
 }
 
 export async function getDonationHistory(): Promise<DonationRecord[]> {
-  try {
-    return await apiFetch<DonationRecord[]>("/donations/history");
-  } catch {
-    return [];
-  }
+  return await apiFetch<DonationRecord[]>("/donations/history");
 }

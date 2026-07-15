@@ -96,11 +96,7 @@ export default async function CampaignDetailPage({ params }: { params: { slug: s
           </div>
         </article>
         <div>
-          <DonationCheckout campaign={campaign} viewMode="view" />
-          <div className="mt-6 rounded-lg bg-boame-soft p-4 text-center">
-            <QRCodeSVG value={`https://boame.com/campaigns/${campaign.slug}`} size={128} className="mx-auto" />
-            <p className="mt-3 text-xs font-bold text-gray-600">Scan to donate in the mobile app</p>
-          </div>
+          <DonationCheckout campaign={campaign} />
           <LinkButton href="/campaigns" variant="secondary" className="mt-4 w-full">Back to campaigns</LinkButton>
         </div>
       </div>

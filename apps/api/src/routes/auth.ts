@@ -1,4 +1,5 @@
 import { Router } from "express";
+import bcrypt from "bcryptjs";
 import { z } from "zod";
 
 export const authRouter = Router();
@@ -22,9 +23,10 @@ export const registeredUsers = new Map<string, {
   password: string;
 }>();
 
-authRouter.post("/register", (req, res, next) => {
+authRouter.post("/register", async (req, res, next) => {
   try {
     const payload = registerSchema.parse(req.body);
+    const hashedPassword = await bcrypt.hash(payload.password, 12);
     // Store user data
     registeredUsers.set(payload.email.toLowerCase(), {
       email: payload.email,
@@ -32,7 +34,7 @@ authRouter.post("/register", (req, res, next) => {
       firstName: payload.firstName,
       lastName: payload.lastName,
       role: payload.role,
-      password: payload.password
+      password: hashedPassword
     });
     res.status(201).json({ message: "Registration accepted", user: { ...payload, password: undefined } });
   } catch (error) {
@@ -40,40 +42,35 @@ authRouter.post("/register", (req, res, next) => {
   }
 });
 
-authRouter.post("/login", (req, res) => {
-  const { email } = req.body;
-  const user = registeredUsers.get(email?.toLowerCase());
-  
-  if (user) {
-    res.json({
-      accessToken: "development-token",
-      refreshToken: "development-refresh-token",
-      user: {
-        id: `user-${registeredUsers.size}`,
-        email: user.email,
-        phone: user.phone,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        role: user.role,
-        status: "ACTIVE"
-      }
-    });
-  } else {
-    // Default user for demo
-    res.json({
-      accessToken: "development-token",
-      refreshToken: "development-refresh-token",
-      user: {
-        id: "demo-user",
-        email: email || "demo@boame.com",
-        phone: "+233241234567",
-        firstName: "Demo",
-        lastName: "User",
-        role: "DONOR",
-        status: "ACTIVE"
-      }
-    });
+authRouter.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ error: "Email and password are required" });
   }
+
+  const user = registeredUsers.get(email.toLowerCase());
+  if (!user) {
+    return res.status(401).json({ error: "Invalid credentials" });
+  }
+
+  const passwordValid = await bcrypt.compare(password, user.password);
+  if (!passwordValid) {
+    return res.status(401).json({ error: "Invalid credentials" });
+  }
+
+  res.json({
+    accessToken: "development-token",
+    refreshToken: "development-refresh-token",
+    user: {
+      id: `user-${registeredUsers.size}`,
+      email: user.email,
+      phone: user.phone,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role: user.role,
+      status: "ACTIVE"
+    }
+  });
 });
 
 authRouter.post("/logout", (_req, res) => res.status(204).send());
@@ -83,83 +80,48 @@ authRouter.post("/reset-password", (_req, res) => res.json({ message: "Password 
 authRouter.get("/verify-email", (_req, res) => res.json({ message: "Email verified" }));
 authRouter.post("/verify-phone", (_req, res) => res.json({ message: "Phone verified" }));
 authRouter.post("/mobile/register", (_req, res) => res.status(201).json({ message: "Mobile device registered" }));
-authRouter.post("/mobile/login", (req, res) => {
-  const { email } = req.body;
+authRouter.post("/mobile/login", async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ error: "Email and password are required" });
+  }
   
-  // Try to find registered user
-  const user = email ? registeredUsers.get(email.toLowerCase()) : null;
+  const user = registeredUsers.get(email.toLowerCase());
+  if (!user) {
+    return res.status(401).json({ error: "Invalid credentials" });
+  }
+
+  const passwordValid = await bcrypt.compare(password, user.password);
+  if (!passwordValid) {
+    return res.status(401).json({ error: "Invalid credentials" });
+  }
+
+  const tokenPayload = {
+    userId: `user-${registeredUsers.size}`,
+    email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    phone: user.phone,
+    role: user.role
+  };
   
-  if (user) {
-    // Return actual registered user data
-    const tokenPayload = {
-      userId: `user-${registeredUsers.size}`,
+  const tokenPayloadString = JSON.stringify(tokenPayload);
+  const encodedPayload = Buffer.from(tokenPayloadString).toString('base64');
+  const accessToken = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${encodedPayload}.signature`;
+  
+  res.json({
+    accessToken,
+    user: {
+      id: tokenPayload.userId,
       email: user.email,
+      phone: user.phone,
       firstName: user.firstName,
       lastName: user.lastName,
-      phone: user.phone,
-      role: user.role
-    };
-    
-    // Create a simple token with user data embedded
-    const tokenPayloadString = JSON.stringify(tokenPayload);
-    const encodedPayload = Buffer.from(tokenPayloadString).toString('base64');
-    const accessToken = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${encodedPayload}.signature`;
-    
-    res.json({
-      accessToken,
-      user: {
-        id: tokenPayload.userId,
-        email: user.email,
-        phone: user.phone,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        role: user.role,
-        status: "ACTIVE"
-      }
-    });
-  } else if (email) {
-    // For unregistered emails, create a user object from the email
-    const emailName = email.split('@')[0];
-    const tokenPayload = {
-      userId: "user-" + Date.now(),
-      email: email,
-      firstName: emailName,
-      lastName: "",
-      phone: "",
-      role: "DONOR"
-    };
-    
-    const tokenPayloadString = JSON.stringify(tokenPayload);
-    const encodedPayload = Buffer.from(tokenPayloadString).toString('base64');
-    const accessToken = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${encodedPayload}.signature`;
-    
-    res.json({
-      accessToken,
-      user: {
-        id: tokenPayload.userId,
-        email: email,
-        phone: "",
-        firstName: emailName,
-        lastName: "",
-        role: "DONOR",
-        status: "ACTIVE"
-      }
-    });
-  } else {
-    // No email provided
-    res.json({
-      accessToken: "mobile-development-token",
-      user: {
-        id: "demo-user",
-        email: "demo@boame.com",
-        phone: "",
-        firstName: "User",
-        lastName: "User",
-        role: "DONOR",
-        status: "ACTIVE"
-      }
-    });
-  }
+      role: user.role,
+      status: "ACTIVE"
+    }
+  });
 });
 authRouter.post("/mobile/logout", (_req, res) => res.status(204).send());
 authRouter.post("/mobile/refresh", (_req, res) => res.json({ accessToken: "mobile-development-token" }));

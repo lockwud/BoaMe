@@ -36,9 +36,9 @@ export function Navbar() {
               <Search size={16} />
             </button>
           </form>
-          <Link href="/mobile-app" className="focus-ring inline-flex h-10 items-center justify-center rounded-full bg-boame-deep px-5 text-sm font-bold text-white shadow-[0_10px_24px_rgba(46,125,50,0.18)] transition hover:bg-boame-green">
-            Get the app
-          </Link>
+            <Link href="/campaigns" className="focus-ring inline-flex h-10 items-center justify-center rounded-full bg-boame-deep px-5 text-sm font-bold text-white shadow-[0_10px_24px_rgba(46,125,50,0.18)] transition hover:bg-boame-green">
+              Browse campaigns
+            </Link>
         </div>
         <button className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 lg:hidden" aria-label="Open menu">
           <Menu size={20} />

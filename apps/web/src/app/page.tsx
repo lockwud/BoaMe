@@ -1,8 +1,7 @@
-import { BadgeCheck, Banknote, BookOpen, Briefcase, HeartPulse, Home, Megaphone, Radio, ShieldCheck, Smartphone } from "lucide-react";
+import { BadgeCheck, Banknote, BookOpen, Briefcase, HeartPulse, Home, Megaphone, Radio, ShieldCheck } from "lucide-react";
 import { FeaturedCampaignCarousel } from "@/components/featured-campaign-carousel";
 import { LiveCampaignPreview } from "@/components/live-campaign-preview";
 import { LinkButton } from "@/components/button";
-import { StoreBadge } from "@/components/store-badges";
 import { getFeaturedCampaigns } from "@/lib/api";
 
 const categories = [
@@ -20,7 +19,12 @@ const steps = [
 ];
 
 export default async function HomePage() {
-  const featured = await getFeaturedCampaigns();
+  let featured: Awaited<ReturnType<typeof getFeaturedCampaigns>> = [];
+  try {
+    featured = await getFeaturedCampaigns();
+  } catch {
+    // API unavailable — featured section will be empty, no dummy data
+  }
 
   return (
     <>
@@ -55,16 +59,13 @@ export default async function HomePage() {
               Raise money, collect requested items, and support verified campaigns with mobile money, card, bank transfer, group donations, and transparent updates.
             </p>
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-              <LinkButton href="/mobile-app" className="h-12 gap-2 rounded-full px-6 text-base">
-                Get the mobile app
-              </LinkButton>
               <LinkButton href="/campaigns" variant="secondary" className="h-12 rounded-full px-6 text-base">
                 Browse campaigns
               </LinkButton>
             </div>
             <div className="mt-7 flex flex-wrap justify-center gap-4 text-sm font-bold text-gray-700">
               <span className="inline-flex items-center gap-2"><BadgeCheck size={17} className="text-boame-deep" /> Verified campaigns</span>
-              <span className="inline-flex items-center gap-2"><Smartphone size={17} className="text-boame-deep" /> MoMo ready</span>
+              <span className="inline-flex items-center gap-2"><BadgeCheck size={17} className="text-boame-deep" /> MoMo ready</span>
               <span className="inline-flex items-center gap-2"><Banknote size={17} className="text-boame-deep" /> No fee to start</span>
             </div>
           </div>
@@ -117,34 +118,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="border-y border-gray-200 bg-white">
-        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-16 sm:px-6 lg:grid-cols-[1fr_1.15fr] lg:px-8">
-          <div>
-            <p className="text-sm font-black uppercase tracking-wide text-boame-deep">Built for Ghana</p>
-            <h2 className="mt-3 text-4xl font-black text-boame-ink">Give, receive, and follow every update from the BoaMe app.</h2>
-            <p className="mt-4 leading-7 text-gray-600">
-              Donors can support campaigns with MoMo, card, bank transfer, group gifts, split payments, or requested items. Beneficiaries can share updates, manage item needs, and request payouts from the same mobile experience.
-            </p>
-            <div className="mt-7 flex flex-wrap gap-3">
-              <StoreBadge store="app-store" />
-              <StoreBadge store="play-store" />
-            </div>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-3">
-            {[
-              ["For donors", "Receipts, donation history, group gifts, item pledges, and saved campaigns."],
-              ["For beneficiaries", "Campaign updates, live media, requested items, and payout requests."],
-              ["For communities", "Transparent progress, trusted updates, and local support that is easy to follow."]
-            ].map(([title, text]) => (
-              <div key={title} className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-                <Smartphone className="text-boame-deep" />
-                <h3 className="mt-4 font-black text-boame-ink">{title}</h3>
-                <p className="mt-2 text-sm leading-6 text-gray-600">{text}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+
     </>
   );
 }

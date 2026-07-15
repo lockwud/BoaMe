@@ -18,7 +18,7 @@ export function Footer() {
         </div>
         <div className="grid gap-6 sm:grid-cols-3">
           <FooterGroup title="Platform" links={[["Campaigns", "/campaigns"], ["Stories", "/stories"], ["How it works", "/how-it-works"]]} />
-          <FooterGroup title="Mobile app" links={[["App Store", "/mobile-app"], ["Play Store", "/mobile-app"], ["How it works", "/how-it-works"]]} />
+          <FooterGroup title="Support" links={[["Campaigns", "/campaigns"], ["How it works", "/how-it-works"], ["Contact", "/contact"]]} />
           <FooterGroup title="Company" links={[["About", "/about"], ["How it works", "/how-it-works"], ["Privacy", "/privacy"]]} />
         </div>
       </div>

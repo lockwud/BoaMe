@@ -63,7 +63,7 @@ campaignRouter.get("/featured", async (_req, res) => {
 
     res.json(formatted);
   } catch (error) {
-    res.json([]);
+    res.status(500).json({ error: "Failed to fetch featured campaigns", message: error instanceof Error ? error.message : "Unknown error" });
   }
 });
 
@@ -85,7 +85,7 @@ campaignRouter.get("/urgent", async (_req, res) => {
 
     res.json(campaigns);
   } catch (error) {
-    res.json([]);
+    res.status(500).json({ error: "Failed to fetch urgent campaigns", message: error instanceof Error ? error.message : "Unknown error" });
   }
 });
 
@@ -147,7 +147,7 @@ campaignRouter.get("/", async (_req, res) => {
 
     res.json(formatted);
   } catch (error) {
-    res.json([]);
+    res.status(500).json({ error: "Failed to fetch campaigns", message: error instanceof Error ? error.message : "Unknown error" });
   }
 });
 
@@ -324,7 +324,7 @@ campaignRouter.get("/:id/updates", async (req, res) => {
 
     res.json(updates);
   } catch (error) {
-    res.json([]);
+    res.status(500).json({ error: "Failed to fetch campaign updates", message: error instanceof Error ? error.message : "Unknown error" });
   }
 });
 
@@ -366,7 +366,7 @@ campaignRouter.get("/:id/donations", async (req, res) => {
 
     res.json(donations);
   } catch (error) {
-    res.json([]);
+    res.status(500).json({ error: "Failed to fetch campaign donations", message: error instanceof Error ? error.message : "Unknown error" });
   }
 });
 
@@ -389,7 +389,7 @@ campaignRouter.get("/:id/stats", async (req, res) => {
       donations: donationStats
     });
   } catch (error) {
-    res.json({ views: 0, shares: 0, donations: 0 });
+    res.status(500).json({ error: "Failed to fetch campaign stats", message: error instanceof Error ? error.message : "Unknown error" });
   }
 });
 

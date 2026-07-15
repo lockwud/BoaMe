@@ -7,7 +7,6 @@
     "dev": "pnpm run dev:clean && turbo dev --filter=@boame/web",
     "dev:clean": "node scripts/clean-dev-ports.mjs",
     "dev:all": "turbo dev",
-    "dev:mobile": "node scripts/assert-supported-node.mjs && node scripts/clean-mobile-dev.mjs && pnpm --filter @boame/mobile run dev:lan:clear",
     "build": "turbo build",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",

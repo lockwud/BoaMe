@@ -1,7 +1,6 @@
 import { BadgeCheck, Banknote, Bell, Gift, HeartHandshake, Megaphone, Radio, ReceiptText, Smartphone, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { LinkButton } from "@/components/button";
-import { StoreBadge } from "@/components/store-badges";
 
 const steps = [
   {
@@ -45,10 +44,7 @@ export default function HowItWorksPage() {
           <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-gray-600">
             BoaMe makes it simple to find verified campaigns, donate money or requested items, join group support, and see what changed after people gave.
           </p>
-          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-            <LinkButton href="/mobile-app" className="h-12 rounded-full px-6 text-base">
-              Get the mobile app
-            </LinkButton>
+          <div className="mt-8 flex justify-center">
             <LinkButton href="/campaigns" variant="secondary" className="h-12 rounded-full px-6 text-base">
               Browse campaigns
             </LinkButton>
@@ -75,32 +71,7 @@ export default function HowItWorksPage() {
         </div>
       </section>
 
-      <section className="border-y border-gray-200 bg-white">
-        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-14 sm:px-6 lg:grid-cols-[0.82fr_1.18fr] lg:px-8">
-          <div>
-            <p className="text-sm font-black uppercase tracking-wide text-boame-deep">One mobile experience</p>
-            <h2 className="mt-3 text-4xl font-black text-boame-ink">Money, items, groups, and campaign updates in one place</h2>
-            <p className="mt-4 leading-7 text-gray-600">
-              Donors and beneficiaries use the mobile app. The website explains BoaMe and lets visitors browse public campaigns, while actual signup, donations, requests, receipts, and updates happen in the app.
-            </p>
-            <div className="mt-7 flex flex-wrap gap-3">
-              <StoreBadge store="app-store" />
-              <StoreBadge store="play-store" />
-            </div>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {flows.map(([Icon, title, text]) => (
-              <article key={title} className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#edf7ee] text-boame-deep">
-                  <Icon size={21} />
-                </span>
-                <h3 className="mt-4 font-black text-boame-ink">{title}</h3>
-                <p className="mt-2 text-sm leading-6 text-gray-600">{text}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
+
     </>
   );
 }
