@@ -13,6 +13,7 @@ import {
   HandCoins,
   HeartHandshake,
   LayoutDashboard,
+  List,
   RefreshCw,
   Search,
   Settings,
@@ -48,8 +49,16 @@ const UserManagement = dynamic(
   () => import("@/components/admin/user-management").then((module) => module.UserManagement),
   { ssr: false, loading: () => <SkeletonPanel /> }
 );
+const ManageCampaigns = dynamic(
+  () => import("@/components/admin/manage-campaigns").then((module) => module.ManageCampaigns),
+  { ssr: false, loading: () => <SkeletonPanel /> }
+);
+const PaymentsComponent = dynamic(
+  () => import("@/components/admin/payments").then((module) => module.Payments),
+  { ssr: false, loading: () => <SkeletonPanel /> }
+);
 
-type TabId = "overview" | "verification" | "payouts" | "users" | "reports" | "trust" | "settings";
+type TabId = "overview" | "verification" | "campaigns" | "payments" | "payouts" | "users" | "reports" | "trust" | "settings";
 
 const navGroups: Array<{
   title: string;
@@ -59,14 +68,16 @@ const navGroups: Array<{
     title: "Operations",
     links: [
       { id: "overview", icon: LayoutDashboard, label: "Overview" },
-      { id: "verification", icon: FileCheck2, label: "Verification" },
-      { id: "payouts", icon: WalletCards, label: "Payouts" },
-      { id: "users", icon: Users, label: "People" }
+      { id: "campaigns", icon: List, label: "Campaigns" },
+      { id: "payments", icon: WalletCards, label: "Payments" },
+      { id: "payouts", icon: HandCoins, label: "Payouts" }
     ]
   },
   {
-    title: "Assurance",
+    title: "Oversight",
     links: [
+      { id: "verification", icon: FileCheck2, label: "Verification" },
+      { id: "users", icon: Users, label: "People" },
       { id: "reports", icon: BarChart3, label: "Reports" },
       { id: "trust", icon: Shield, label: "Trust & risk" },
       { id: "settings", icon: Settings, label: "Settings" }
@@ -424,6 +435,10 @@ export default function AdminDashboardPage() {
           );
         }
         return <OverviewPanel overviewStats={overviewStats} townStats={townStats} updatedAt={updatedAt} refreshing={refreshing} onRefresh={loadOverview} />;
+      case "campaigns":
+        return <ManageCampaigns />;
+      case "payments":
+        return <PaymentsComponent />;
       case "verification":
         return <CampaignVerification searchQuery={searchQuery} />;
       case "payouts":

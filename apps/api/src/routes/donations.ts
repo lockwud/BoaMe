@@ -2,6 +2,23 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../config/prisma.js";
 
+async function getOrCreateAnonymousDonor() {
+  const existing = await prisma.user.findFirst({ orderBy: { createdAt: "asc" } });
+  if (existing) return existing;
+
+  return prisma.user.create({
+    data: {
+      email: "anonymous@boame.app",
+      phone: "+233000000000",
+      password: "",
+      firstName: "Anonymous",
+      lastName: "Donor",
+      role: "DONOR",
+      status: "ACTIVE"
+    }
+  });
+}
+
 export const donationRouter = Router();
 
 const paymentMethodSchema = z.enum(["CARD", "MOBILE_MONEY", "BANK_TRANSFER", "OFFLINE"]);
@@ -19,6 +36,7 @@ const initializeDonationSchema = z.object({
   isAnonymous: z.boolean().default(false),
   message: z.string().max(280).optional(),
   phoneNumber: z.string().max(24).optional(),
+  paymentReference: z.string().optional(),
   itemDonations: z
     .array(
       z.object({
@@ -34,8 +52,8 @@ const initializeDonationSchema = z.object({
   paymentDetails: z
     .object({
       provider: z.literal("PAYSTACK_DEMO"),
-      payerName: z.string().min(2),
-      payerEmail: z.string().email(),
+      payerName: z.string().min(1).default("Anonymous"),
+      payerEmail: z.string().min(1).default("anonymous@boame.app"),
       cardLast4: z.string().optional(),
       mobileMoneyProvider: z.enum(["MTN", "VODAFONE", "AIRTELTIGO"]).optional(),
       bankName: z.string().optional(),
@@ -76,20 +94,8 @@ const initializeDonationSchema = z.object({
   }
 
   if (payload.kind !== "ITEMS" && payload.paymentDetails) {
-    if (payload.paymentMethod === "CARD" && !payload.paymentDetails.cardLast4) {
-      context.addIssue({ code: "custom", path: ["paymentDetails", "cardLast4"], message: "Card payments require card details." });
-    }
-
     if (payload.paymentMethod === "MOBILE_MONEY" && !payload.paymentDetails.mobileMoneyProvider) {
       context.addIssue({ code: "custom", path: ["paymentDetails", "mobileMoneyProvider"], message: "Mobile money payments require a network." });
-    }
-
-    if (payload.paymentMethod === "BANK_TRANSFER" && (!payload.paymentDetails.bankName || !payload.paymentDetails.accountName)) {
-      context.addIssue({ code: "custom", path: ["paymentDetails", "bankName"], message: "Bank transfer payments require bank and account details." });
-    }
-
-    if (payload.paymentMethod === "OFFLINE" && !payload.paymentDetails.offlinePledgeNote) {
-      context.addIssue({ code: "custom", path: ["paymentDetails", "offlinePledgeNote"], message: "Offline pledges require a pledge note." });
     }
   }
 
@@ -129,30 +135,42 @@ donationRouter.post("/initialize", async (req, res, next) => {
       return res.status(404).json({ message: "Campaign not found" });
     }
 
-    const reference = `BOAME-DON-${Date.now()}`;
+    const reference = payload.paymentReference ?? `BOAME-DON-${Date.now()}`;
     const netAmount = payload.amount - Math.round(payload.amount * 0.025);
+    const isPaystackPayment = payload.paymentMethod !== "OFFLINE";
 
-    // Create donation record in database
-    const donation = await prisma.donation.create({
-      data: {
-        campaignId: campaign.id,
-        donorId: "placeholder", // Will come from auth in real implementation
-        amount: payload.amount,
-        netAmount,
-        type: payload.type,
-        paymentMethod: payload.paymentMethod,
-        isAnonymous: payload.isAnonymous,
-        message: payload.message,
-        paymentReference: reference,
-        paymentProvider: "PAYSTACK_DEMO",
-        status: "COMPLETED",
-        paymentData: payload.paymentDetails || {}
-      }
-    });
+    // Use existing user or create anonymous donor so no login is required
+    const donor = await getOrCreateAnonymousDonor();
+
+    // Create donation record and update campaign raised amount
+    const [donation] = await prisma.$transaction([
+      prisma.donation.create({
+        data: {
+          campaignId: campaign.id,
+          donorId: donor.id,
+          amount: payload.amount,
+          netAmount,
+          type: payload.type,
+          paymentMethod: payload.paymentMethod,
+          isAnonymous: payload.isAnonymous,
+          message: payload.message,
+          paymentReference: reference,
+          paymentProvider: isPaystackPayment ? "PAYSTACK" : "OFFLINE",
+          status: "COMPLETED",
+          paymentData: payload.paymentDetails || {}
+        }
+      }),
+      prisma.campaign.update({
+        where: { id: campaign.id },
+        data: { raisedAmount: { increment: payload.amount } }
+      })
+    ]);
+
+    const updatedCampaign = await prisma.campaign.findUnique({ where: { id: campaign.id } });
 
     res.status(201).json({
       reference,
-      authorizationUrl: "https://checkout.paystack.com/development",
+      authorizationUrl: "",
       donation: {
         id: donation.id,
         campaignId: donation.campaignId,
@@ -165,7 +183,8 @@ donationRouter.post("/initialize", async (req, res, next) => {
         isAnonymous: donation.isAnonymous,
         reference: donation.paymentReference,
         status: donation.status,
-        createdAt: donation.createdAt.toISOString()
+        createdAt: donation.createdAt.toISOString(),
+        raisedAmount: updatedCampaign?.raisedAmount ?? campaign.raisedAmount + payload.amount
       }
     });
   } catch (error) {
@@ -196,7 +215,7 @@ donationRouter.get("/verify/:reference", async (req, res) => {
     });
 
     if (!donation) {
-      return res.json({ reference: req.params.reference, status: "SUCCESS" });
+      return res.status(404).json({ error: "Donation not found", reference: req.params.reference });
     }
 
     res.json({
@@ -269,7 +288,7 @@ donationRouter.get("/recurring", async (_req, res) => {
 
     res.json(formatted);
   } catch (error) {
-    res.json([]);
+    res.status(500).json({ error: "Failed to fetch recurring donations", message: error instanceof Error ? error.message : "Unknown error" });
   }
 });
 
@@ -319,7 +338,7 @@ donationRouter.get("/:id", async (req, res) => {
     });
 
     if (!donation) {
-      return res.json({ id: req.params.id, status: "not_found" });
+      return res.status(404).json({ error: "Donation not found" });
     }
 
     res.json({
@@ -331,7 +350,7 @@ donationRouter.get("/:id", async (req, res) => {
       createdAt: donation.createdAt.toISOString()
     });
   } catch (error) {
-    res.json({ id: req.params.id, status: "error" });
+    res.status(500).json({ error: "Failed to fetch donation", message: error instanceof Error ? error.message : "Unknown error" });
   }
 });
 

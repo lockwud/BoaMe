@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, LockKeyhole, Mail, ShieldCheck } from "lucide-react";
+import { Eye, EyeOff, Loader2, LockKeyhole, Mail, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { apiPost, setStoredSession } from "@/lib/client-api";
@@ -18,6 +18,7 @@ export function AdminLoginForm() {
   const router = useRouter();
   const [email, setEmail] = useState("admin@boame.com");
   const [password, setPassword] = useState("Password123!");
+  const [showPassword, setShowPassword] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [isSubmitting, setSubmitting] = useState(false);
 
@@ -58,7 +59,10 @@ export function AdminLoginForm() {
         <span className="text-[11px] font-black text-gray-600">Password</span>
         <span className="relative mt-2 block">
           <LockKeyhole className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
-          <input value={password} onChange={(event) => setPassword(event.target.value)} className="focus-ring h-10 w-full rounded-full border border-gray-200 bg-white px-4 pl-9 text-xs font-semibold text-boame-ink placeholder:text-gray-400" type="password" placeholder="Password" required />
+          <input value={password} onChange={(event) => setPassword(event.target.value)} className="focus-ring h-10 w-full rounded-full border border-gray-200 bg-white px-4 pl-9 pr-10 text-xs font-semibold text-boame-ink placeholder:text-gray-400" type={showPassword ? "text" : "password"} placeholder="Password" required />
+          <button type="button" onClick={() => setShowPassword((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" tabIndex={-1}>
+            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+          </button>
         </span>
       </label>
 

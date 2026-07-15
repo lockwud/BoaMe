@@ -13,9 +13,11 @@ export { OverviewStats } from "./overview-stats";
 
 // Campaign management components
 export { CampaignVerification } from "./campaign-verification";
+export { ManageCampaigns } from "./manage-campaigns";
 
 // Financial components
 export { PayoutApprovals } from "./payout-approvals";
+export { Payments } from "./payments";
 
 // User management components
 export { UserManagement } from "./user-management";

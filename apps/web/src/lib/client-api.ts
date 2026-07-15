@@ -5,19 +5,19 @@ type RequestOptions = {
 };
 
 function authHeaders(options: RequestOptions = {}) {
-  const token = options.token ?? getStoredToken();
+  const token = options.token === "" ? null : (options.token ?? getStoredToken());
   return token ? { Authorization: `Bearer ${token}` } : undefined;
 }
 
 async function readError(response: Response) {
   const text = await response.text();
-  if (!text) return `Request failed with ${response.status}`;
+  if (!text) return `Request failed with status ${response.status}`;
 
   try {
     const payload = JSON.parse(text) as { error?: string; message?: string; details?: unknown };
-    return payload.error ?? payload.message ?? text;
+    return payload.error ?? payload.message ?? `Status ${response.status}: ${text}`;
   } catch {
-    return text;
+    return `Status ${response.status}: ${text.slice(0, 200)}`;
   }
 }
 
