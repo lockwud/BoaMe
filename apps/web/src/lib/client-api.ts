@@ -75,6 +75,20 @@ export async function apiPut<T>(path: string, body: unknown, options: RequestOpt
   return response.json() as Promise<T>;
 }
 
+export async function apiUpload<T>(path: string, formData: FormData, options: RequestOptions = {}): Promise<T> {
+  const response = await fetch(`${API_URL}${path}`, {
+    method: "POST",
+    headers: authHeaders(options),
+    body: formData
+  });
+
+  if (!response.ok) {
+    throw new Error(await readError(response));
+  }
+
+  return response.json() as Promise<T>;
+}
+
 export async function apiDownload(path: string, filename: string, options: RequestOptions = {}) {
   const response = await fetch(`${API_URL}${path}`, { headers: authHeaders(options) });
   if (!response.ok) throw new Error(await readError(response));
