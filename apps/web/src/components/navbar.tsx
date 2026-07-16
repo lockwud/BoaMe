@@ -3,8 +3,9 @@ import Link from "next/link";
 
 const links = [
   ["Campaigns", "/campaigns"],
+  ["Start a campaign", "/start"],
   ["How It Works", "/how-it-works"],
-  ["Stories", "/stories"]
+  ["About", "/about"]
 ];
 
 export function Navbar() {
@@ -36,8 +37,8 @@ export function Navbar() {
               <Search size={16} />
             </button>
           </form>
-            <Link href="/campaigns" className="focus-ring inline-flex h-10 items-center justify-center rounded-full bg-boame-deep px-5 text-sm font-bold text-white shadow-[0_10px_24px_rgba(46,125,50,0.18)] transition hover:bg-boame-green">
-              Browse campaigns
+            <Link href="/start" className="focus-ring inline-flex h-10 items-center justify-center rounded-full bg-boame-deep px-5 text-sm font-bold text-white shadow-[0_10px_24px_rgba(46,125,50,0.18)] transition hover:bg-boame-green">
+              Start a campaign
             </Link>
         </div>
         <button className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 lg:hidden" aria-label="Open menu">
