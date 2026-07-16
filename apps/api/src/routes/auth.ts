@@ -23,6 +23,19 @@ export const registeredUsers = new Map<string, {
   password: string;
 }>();
 
+// Seed default admin user
+(async () => {
+  const hash = await bcrypt.hash("Password123!", 12);
+  registeredUsers.set("admin@boame.com", {
+    email: "admin@boame.com",
+    phone: "+233240000000",
+    firstName: "Admin",
+    lastName: "User",
+    role: "DONOR",
+    password: hash
+  });
+})();
+
 authRouter.post("/register", async (req, res, next) => {
   try {
     const payload = registerSchema.parse(req.body);
