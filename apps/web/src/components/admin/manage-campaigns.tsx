@@ -1,7 +1,7 @@
 "use client";
 
 import { Plus, RefreshCw, Search, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { apiGet, apiPost } from "@/lib/client-api";
 
 type Campaign = {
@@ -36,8 +36,8 @@ export function ManageCampaigns() {
   async function loadCampaigns() {
     try {
       setLoading(true);
-      const data = await apiGet<Campaign[]>("/campaigns");
-      setCampaigns(data);
+      const data = await apiGet<{ data: Campaign[] }>("/campaigns");
+      setCampaigns(data.data ?? []);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load campaigns");
@@ -73,10 +73,11 @@ export function ManageCampaigns() {
     }
   }
 
-  const filtered = campaigns.filter((c) =>
-    c.title.toLowerCase().includes(search.toLowerCase()) ||
-    c.category.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = useMemo(() =>
+    (campaigns ?? []).filter((c) =>
+      c.title.toLowerCase().includes(search.toLowerCase()) ||
+      c.category.toLowerCase().includes(search.toLowerCase())
+    ), [campaigns, search]);
 
   return (
     <div className="space-y-4">
